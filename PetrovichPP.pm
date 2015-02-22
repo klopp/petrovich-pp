@@ -45,8 +45,8 @@ sub new
     chomp $rpath;
     $rpath =~ s|/$||g;
 
-#    my $cpath = $rpath.'/rules.yml';
-    my $cpath = $rpath . '/rules.json';
+#    my $cpath = $rpath.'/rules/rules.yml';
+    my $cpath = $rpath . '/rules/rules.json';
 
     local $/;
     open my $cfile, '<', $cpath or confess "Can not open '$cpath': $!";
