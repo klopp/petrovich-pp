@@ -8,7 +8,7 @@
 
 ##Использование
 
-В библиотеку входит модуль ```Petrovich```
+В библиотеку входит модуль ```PetrovichPP```
 
 ```perl
 use lib 'path-to-module';
