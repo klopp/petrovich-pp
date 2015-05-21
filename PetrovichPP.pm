@@ -12,8 +12,8 @@ use Exporter;
 
 our @ISA    = ( 'Exporter' );
 our @EXPORT = qw
-  (
-  setGender detectGender firstName lastName middleName fullName
+    (
+    setGender detectGender firstName lastName middleName fullName
 );
 
 # ------------------------------------------------------------------------------
@@ -25,9 +25,9 @@ use constant CASE_INS  => 3;
 use constant CASE_PREP => 4;
 use constant CASE_LAST => CASE_PREP;
 
-use constant GENDER_MALE        => 1;
-use constant GENDER_FEMALE      => 2;
-use constant GENDER_ANDRO       => 3;
+use constant GENDER_MALE   => 1;
+use constant GENDER_FEMALE => 2;
+use constant GENDER_ANDRO  => 3;
 
 # ------------------------------------------------------------------------------
 sub new
@@ -45,7 +45,7 @@ sub new
     chomp $rpath;
     $rpath =~ s|/$||g;
 
-#    my $cpath = $rpath.'/rules/rules.yml';
+    #    my $cpath = $rpath.'/rules/rules.yml';
     my $cpath = $rpath . '/rules/rules.json';
 
     local $/;
@@ -56,15 +56,15 @@ sub new
     eval { $self->{rules} = decode_json( $cdata ); };
     confess "Can not decode JSON data: $@" if $@;
 
-#    eval { $self->{rules} = YAML::Loader->new->load( $cdata ); };
-#    confess "Can not decode YAML data: $@" if $@;
+    #    eval { $self->{rules} = YAML::Loader->new->load( $cdata ); };
+    #    confess "Can not decode YAML data: $@" if $@;
 
     foreach my $type ( qw/lastname firstname middlename/ )
     {
         foreach my $suffix ( @{ $self->{rules}->{$type}->{suffixes} } )
         {
             %{ $suffix->{htest} } =
-              map { $_ => length $_ } @{ $suffix->{test} };
+                map { $_ => length $_ } @{ $suffix->{test} };
         }
         foreach my $except ( @{ $self->{rules}->{$type}->{exceptions} } )
         {
@@ -80,8 +80,8 @@ sub new
 sub __self_or_default
 {
     return @_
-      if ref( $_[0] ) eq __PACKAGE__
-      or ( @_ > 2 and $_[0] eq __PACKAGE__ );
+        if ref( $_[0] ) eq __PACKAGE__
+        or ( @_ > 2 and $_[0] eq __PACKAGE__ );
     unshift @_, PetrovichPP->new;
     return @_;
 }
@@ -90,18 +90,17 @@ sub __self_or_default
 sub firstName  { return _inflect( @_, 'first' ); }
 sub middleName { return _inflect( @_, 'middle' ); }
 sub lastName   { return _inflect( @_, 'last' ); }
+
 # ------------------------------------------------------------------------------
 sub fullName
 {
-    my ( $self, $last, $first, $middle, $case ) = __self_or_default(@_);
+    my ( $self, $last, $first, $middle, $case ) = __self_or_default( @_ );
 
-    $self->setGender($self->detectGender($middle));
+    $self->setGender( $self->detectGender( $middle ) );
 
-    (
-        $self->_inflect( $last, $case, 'last' ),
-        $self->_inflect( $first, $case, 'first' ),
-        $self->_inflect( $middle, $case, 'middle' )
-    );
+    (   $self->_inflect( $last,   $case, 'last' ),
+        $self->_inflect( $first,  $case, 'first' ),
+        $self->_inflect( $middle, $case, 'middle' ) );
 }
 
 # ------------------------------------------------------------------------------
@@ -112,7 +111,7 @@ sub detectGender
     confess '$middlename parameter required!' unless $middlename;
 
     $middlename =~ /(..)$/ and $middlename = lc $1;
-    return GENDER_MALE   if $middlename eq 'ич' || $middlename eq 'ыч';
+    return GENDER_MALE if $middlename eq 'ич' || $middlename eq 'ыч';
     return GENDER_FEMALE if $middlename eq 'на';
     return GENDER_ANDRO;
 }
@@ -152,12 +151,9 @@ sub _checkException
     foreach my $rule ( @{ $self->{rules}->{$type}->{exceptions} } )
     {
         next
-          unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
-          || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
+            unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
+            || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
 
-        #        next unless $self->_checkGender( $rule->{gender} );
-
-        #        if( grep { $_ eq $lower_name } @{ $rule->{test} } )
         if( $rule->{htest}->{$lower_name} )
         {
             return $name if $rule->{mods}->[$case] eq '.';
@@ -172,24 +168,21 @@ sub _findInRules
 {
     my ( $self, $name, $case, $type ) = __self_or_default( @_ );
 
-    #    my $name_length = length $name;
-
     foreach my $rule ( @{ $self->{rules}->{$type}->{suffixes} } )
     {
         next
-          unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
-          || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
+            unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
+            || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
 
         #        foreach my $last_char ( @{ $rule->{test} } )
         foreach my $last_char ( keys %{ $rule->{htest} } )
         {
-            #            my $last_char_length = length $last_char;
-#            my $last_char_length = $rule->{htest}->{$last_char};
-
             my $last_name_char =
 
-                substr( $name, -$rule->{htest}->{$last_char}, $rule->{htest}->{$last_char} );
-#              substr( $name, -$last_char_length, $last_char_length );
+                substr(
+                $name,
+                -$rule->{htest}->{$last_char},
+                $rule->{htest}->{$last_char} );
 
             if( $last_char eq $last_name_char )
             {
@@ -212,7 +205,8 @@ sub _inflect
 
     return $name if $case == CASE_NOM;
 
-    confess "\$case parameter is invalid: '$case'!" if $case !~ /^\d+$/ && $case > CASE_LAST;
+    confess "\$case parameter is invalid: '$case'!"
+        if $case !~ /^\d+$/ && $case > CASE_LAST;
 
     my @names_arr = split( '-', $name );
     my @result;
@@ -227,7 +221,7 @@ sub _inflect
         else
         {
             push @result,
-              $self->_findInRules( $arr_name, $case, $type . 'name' );
+                $self->_findInRules( $arr_name, $case, $type . 'name' );
         }
     }
     return join( '-', @result );
@@ -240,7 +234,6 @@ sub _applyRule
 
     my $dashes = $mc =~ s|-||g;
     $name =~ s|.{$dashes}$|| if $dashes;
-####    $name = substr( $name, -$dashes, $dashes ) if $dashes;
     return $name . $mc;
 }
 
