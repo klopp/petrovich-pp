@@ -1,20 +1,16 @@
 # ------------------------------------------------------------------------------
 package PetrovichPP;
-use strict;
-use warnings;
+
+use Modern::Perl;
 use utf8;
 use FindBin qw/$RealBin/;
 use JSON;
 
 #use YAML::Loader;
 use Carp;
-use Exporter;
 
-our @ISA    = ( 'Exporter' );
-our @EXPORT = qw
-    (
-    setGender detectGender firstName lastName middleName fullName
-);
+use Exporter qw/import/;
+our @EXPORT_OK = qw/setGender detectGender firstName lastName middleName fullName/;
 
 # ------------------------------------------------------------------------------
 use constant CASE_NOM  => -1;
