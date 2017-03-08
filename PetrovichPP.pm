@@ -6,7 +6,7 @@ use utf8;
 use FindBin qw/$RealBin/;
 use JSON;
 
-#use YAML::Loader;
+###use YAML::Loader;
 use Carp;
 
 use Exporter qw/import/;
@@ -35,7 +35,9 @@ sub new
         genders => {
             male        => GENDER_MALE,
             female      => GENDER_FEMALE,
-            androgynous => GENDER_ANDRO } };
+            androgynous => GENDER_ANDRO
+        }
+    };
 
     my $rpath = $rules_path || $RealBin;
     chomp $rpath;
@@ -49,21 +51,18 @@ sub new
     my $cdata = <$cfile>;
     close $cfile;
 
-    eval { $self->{rules} = decode_json( $cdata ); };
+    eval { $self->{rules} = decode_json($cdata); };
     confess "Can not decode JSON data: $@" if $@;
 
     #    eval { $self->{rules} = YAML::Loader->new->load( $cdata ); };
     #    confess "Can not decode YAML data: $@" if $@;
 
-    foreach my $type ( qw/lastname firstname middlename/ )
-    {
-        foreach my $suffix ( @{ $self->{rules}->{$type}->{suffixes} } )
-        {
-            %{ $suffix->{htest} } =
-                map { $_ => length $_ } @{ $suffix->{test} };
+    foreach my $type (qw/lastname firstname middlename/) {
+        foreach my $suffix ( @{ $self->{rules}->{$type}->{suffixes} } ) {
+            %{ $suffix->{htest} }
+                = map { $_ => length $_ } @{ $suffix->{test} };
         }
-        foreach my $except ( @{ $self->{rules}->{$type}->{exceptions} } )
-        {
+        foreach my $except ( @{ $self->{rules}->{$type}->{exceptions} } ) {
             %{ $except->{htest} } = map { $_ => 1 } @{ $except->{test} };
         }
     }
@@ -90,19 +89,20 @@ sub lastName   { return _inflect( @_, 'last' ); }
 # ------------------------------------------------------------------------------
 sub fullName
 {
-    my ( $self, $last, $first, $middle, $case ) = __self_or_default( @_ );
+    my ( $self, $last, $first, $middle, $case ) = __self_or_default(@_);
 
-    $self->setGender( $self->detectGender( $middle ) );
+    $self->setGender( $self->detectGender($middle) );
 
     (   $self->_inflect( $last,   $case, 'last' ),
         $self->_inflect( $first,  $case, 'first' ),
-        $self->_inflect( $middle, $case, 'middle' ) );
+        $self->_inflect( $middle, $case, 'middle' )
+    );
 }
 
 # ------------------------------------------------------------------------------
 sub detectGender
 {
-    my ( undef, $middlename ) = __self_or_default( @_ );
+    my ( undef, $middlename ) = __self_or_default(@_);
 
     confess '$middlename parameter required!' unless $middlename;
 
@@ -115,21 +115,19 @@ sub detectGender
 # ------------------------------------------------------------------------------
 sub setGender
 {
-    my ( $self, $gender ) = __self_or_default( @_ );
+    my ( $self, $gender ) = __self_or_default(@_);
 
-    if(    $gender == GENDER_MALE
+    if (   $gender == GENDER_MALE
         || $gender == GENDER_FEMALE
         || $gender == GENDER_ANDRO )
     {
         $self->{gender} = $gender;
     }
 
-    elsif( $self->{genders}->{$gender} )
-    {
+    elsif ( $self->{genders}->{$gender} ) {
         $self->{gender} = $self->{genders}->{$gender};
     }
-    else
-    {
+    else {
         confess "Invalid gender: '$gender'";
     }
     return $self;
@@ -138,20 +136,18 @@ sub setGender
 # ------------------------------------------------------------------------------
 sub _checkException
 {
-    my ( $self, $name, $case, $type ) = __self_or_default( @_ );
+    my ( $self, $name, $case, $type ) = __self_or_default(@_);
 
     return unless $self->{rules}->{$type}->{exceptions};
 
     my $lower_name = lc $name;
 
-    foreach my $rule ( @{ $self->{rules}->{$type}->{exceptions} } )
-    {
+    foreach my $rule ( @{ $self->{rules}->{$type}->{exceptions} } ) {
         next
             unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
             || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
 
-        if( $rule->{htest}->{$lower_name} )
-        {
+        if ( $rule->{htest}->{$lower_name} ) {
             return $name if $rule->{mods}->[$case] eq '.';
             return $self->_applyRule( $rule->{mods}->[$case], $name );
         }
@@ -162,26 +158,20 @@ sub _checkException
 # ------------------------------------------------------------------------------
 sub _findInRules
 {
-    my ( $self, $name, $case, $type ) = __self_or_default( @_ );
+    my ( $self, $name, $case, $type ) = __self_or_default(@_);
 
-    foreach my $rule ( @{ $self->{rules}->{$type}->{suffixes} } )
-    {
+    foreach my $rule ( @{ $self->{rules}->{$type}->{suffixes} } ) {
         next
             unless $self->{genders}->{ $rule->{gender} } == $self->{gender}
             || $self->{genders}->{ $rule->{gender} } == GENDER_ANDRO;
 
         #        foreach my $last_char ( @{ $rule->{test} } )
-        foreach my $last_char ( keys %{ $rule->{htest} } )
-        {
+        foreach my $last_char ( keys %{ $rule->{htest} } ) {
             my $last_name_char =
 
-                substr(
-                $name,
-                -$rule->{htest}->{$last_char},
-                $rule->{htest}->{$last_char} );
+                substr( $name, -$rule->{htest}->{$last_char}, $rule->{htest}->{$last_char} );
 
-            if( $last_char eq $last_name_char )
-            {
+            if ( $last_char eq $last_name_char ) {
                 next if $rule->{mods}->[$case] eq '.';
                 return $self->_applyRule( $rule->{mods}->[$case], $name );
             }
@@ -193,11 +183,11 @@ sub _findInRules
 # ------------------------------------------------------------------------------
 sub _inflect
 {
-    my ( $self, $name, $case, $type ) = __self_or_default( @_ );
+    my ( $self, $name, $case, $type ) = __self_or_default(@_);
 
     confess '$name parameter required!' unless $name;
 
-    $name =~ /^(.)(.*)$/ and $name = uc( $1 ) . lc( $2 );
+    $name =~ /^(.)(.*)$/ and $name = uc($1) . lc($2);
 
     return $name if $case == CASE_NOM;
 
@@ -207,17 +197,12 @@ sub _inflect
     my @names_arr = split( '-', $name );
     my @result;
 
-    foreach my $arr_name ( @names_arr )
-    {
-        if( (   my $except =
-                $self->_checkException( $arr_name, $case, $type . 'name' ) ) )
-        {
+    foreach my $arr_name (@names_arr) {
+        if ( ( my $except = $self->_checkException( $arr_name, $case, $type . 'name' ) ) ) {
             push @result, $except;
         }
-        else
-        {
-            push @result,
-                $self->_findInRules( $arr_name, $case, $type . 'name' );
+        else {
+            push @result, $self->_findInRules( $arr_name, $case, $type . 'name' );
         }
     }
     return join( '-', @result );
@@ -226,7 +211,7 @@ sub _inflect
 # ------------------------------------------------------------------------------
 sub _applyRule
 {
-    my ( undef, $mc, $name ) = __self_or_default( @_ );
+    my ( undef, $mc, $name ) = __self_or_default(@_);
 
     my $dashes = $mc =~ s|-||g;
     $name =~ s|.{$dashes}$|| if $dashes;
